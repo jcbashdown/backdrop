@@ -25,3 +25,11 @@ class PermissionsTestCase(unittest.TestCase):
         })
 
         assert_that(permissions.allowed("userone", "mybucket"), is_(True))
+
+    def test_return_true_for_user_with_wildcard_permission(self):
+        permissions = Permissions({
+            "userone": ["*"]
+        })
+
+        assert_that(permissions.allowed("userone", "any_bucket"), is_(True))
+        assert_that(permissions.allowed("userone", "other_bucket"), is_(True))
