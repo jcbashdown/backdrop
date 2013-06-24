@@ -7,7 +7,13 @@ services: mongodb
 # command to install dependencies
 install: "pip install -r requirements_for_tests.txt --use-mirrors"
 # command to run tests
-script: nosetests && behave && ./pep-it.sh
+script:
+  - nosetests --with-coverage --cover-package=backdrop --cover-inclusive
+  - behave
+  - ./pep-it.sh
+  - coverage report -m
+after_script:
+  - coveralls --verbose
 branches:
   except:
     - master
