@@ -13,7 +13,7 @@ script:
   - behave
   - ./pep-it.sh
 after_script:
-  - coverage report -m --omit='/var/tmp/*'
+  - coverage report -m --omit="$VIRTUAL_ENV,./features"
 branches:
   except:
     - master
