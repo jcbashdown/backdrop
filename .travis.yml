@@ -10,10 +10,9 @@ install: "pip install -r requirements_for_tests.txt --use-mirrors"
 script:
   - nosetests --with-coverage --cover-package=backdrop --cover-inclusive
   - coverage report -m
+  - coveralls --verbose
   - behave
   - ./pep-it.sh
-after_script:
-  - coveralls --verbose
 branches:
   except:
     - master
