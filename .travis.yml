@@ -8,8 +8,7 @@ services: mongodb
 install: "pip install -q -r requirements_for_tests.txt --use-mirrors"
 # command to run tests
 script:
-  - nosetests --with-coverage --cover-package=backdrop --cover-inclusive
-  - coverage report -m --include='backdrop/*'
+  - nosetests --with-coverage --cover-inclusive
   - behave
   - ./pep-it.sh
 after_script:
