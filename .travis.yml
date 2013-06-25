@@ -13,7 +13,7 @@ script:
   - behave
   - ./pep-it.sh
 after_script:
-  - coveralls --verbose
+  - coveralls
 branches:
   except:
     - master
