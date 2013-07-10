@@ -40,7 +40,7 @@ This is the oauth flow we are using to authenticate users with Signonotron2
 
 1. **GET** `/_user/sign_in` redirects user to signonotron2 asking them to give backdrop permission to see their data
 2. User signs in allowing backdrop to see their data
-3. **GET** (redirected from signonotron) `/_user/authorized?code=blahblahblah` 
+3. **GET** (redirected from signonotron) `/_user/authorized?code=blahblahblah`
     - **POST** (to signonotron) `/oauth/token` exchanges authorization code for access token so backdrop can query users data
     - **GET** (to signonotron) `/user.json` uses access token to get user data and see if they have permissions to sign in to backdrop
 4. User is now signed in
@@ -64,3 +64,13 @@ Other parameters:
 - `period` ("week", "month")
 - `sort_by` (field)
 - `limit` (number)
+
+## Add data
+
+- using the test bucket
+- how to create a new bucket
+- special fields in a datum:
+  - timestamp
+  - id
+- posting data one record at a time
+- posting a batch of data
