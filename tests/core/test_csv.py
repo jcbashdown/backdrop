@@ -3,6 +3,7 @@
 from cStringIO import StringIO
 import unittest
 import cStringIO
+import datetime
 from hamcrest import assert_that, only_contains, is_
 
 from backdrop.core.parse_csv import parse_csv, lines
@@ -122,6 +123,63 @@ class ParseCsvTestCase(unittest.TestCase):
 
         assert_that(data, only_contains(
             {"prop1": "value", "prop2": "value\nwith newline"}
+        ))
+
+    def test_int_schema_validation(self):
+        csv = u"count\n10\n15"
+
+        csv_stream = _string_io(csv, "utf-8")
+
+        data = parse_csv(csv_stream, [{"type": "int"}])
+        assert_that(data, is_(
+            [
+                {u"count": 10},
+                {u"count": 15},
+            ]
+        ))
+
+    def test_order_of_schema_validation(self):
+        csv = u"count,url\n10,http://www.example.com/first\n15,http://www.example.com/second"
+
+        csv_stream = _string_io(csv, "utf-8")
+
+        data = parse_csv(csv_stream, [{"type": "int"}, {}])
+        assert_that(data, is_(
+            [
+                {u"count": 10, u"url": u"http://www.example.com/first" },
+                {u"count": 15, u"url": u"http://www.example.com/second" },
+            ]
+        ))
+
+    def test_expected_int_but_was_string_should_fail(self):
+        csv = u"count\nhello"
+
+        csv_stream = _string_io(csv, "utf-8")
+
+        self.assertRaises(ParseError, parse_csv, csv_stream, [{"type": "int"}])
+
+    def test_date_schema_parsing(self):
+        csv = u"date\n2013-05-16"
+
+        csv_stream = _string_io(csv, "utf-8")
+
+        data = parse_csv(csv_stream, [{"type": "date"}])
+        assert_that(data, is_(
+            [
+                {u"date": datetime.datetime(2013, 5, 16)},
+            ]
+        ))
+
+    def test_datetime_schema_parsing(self):
+        csv = u"date\n2013-05-16T17:33:31"
+
+        csv_stream = _string_io(csv, "utf-8")
+
+        data = parse_csv(csv_stream, [{"type": "datetime"}])
+        assert_that(data, is_(
+            [
+                {u"date": datetime.datetime(2013, 5, 16, 17, 33, 31)},
+            ]
         ))
 
 
