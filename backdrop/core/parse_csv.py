@@ -1,5 +1,5 @@
 import csv
-from .errors import ParseError
+from .errors import ParseError, ValidationError
 
 
 def parse_csv(incoming_data, schema=None):
@@ -113,13 +113,17 @@ class IntField(BaseField):
             return False
         self.converted_value = int(raw_value)
 
+        # Should we collect errors and pass all back? For now, first failure
+        # causes an exception.
         min_value = self.definition.get('min', None)
         if min_value is not None and self.converted_value < min_value:
-            raise ParseError()
+            raise ValidationError(u"Expected to be >= %d but was %d"
+                                  % (min_value, self.converted_value))
 
         max_value = self.definition.get('max', None)
         if max_value is not None and self.converted_value > max_value:
-            raise ParseError()
+            raise ValidationError(u"Expected to be <= %d but was %d"
+                                  % (max_value, self.converted_value))
 
         return True
 
@@ -165,7 +169,7 @@ class CsvSchemaValidator(object):
         if self._is_valid(datum):
             return self._typed(datum)
 
-        raise ParseError(
+        raise ValidationError(
             "Invalid data did not match the expected schema %s"
             % self.errors)
 

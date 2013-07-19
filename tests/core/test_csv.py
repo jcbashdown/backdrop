@@ -7,7 +7,7 @@ import datetime
 from hamcrest import assert_that, only_contains, is_
 
 from backdrop.core.parse_csv import parse_csv, lines
-from backdrop.core.errors import ParseError
+from backdrop.core.errors import ParseError, ValidationError
 
 
 class ParseCsvTestCase(unittest.TestCase):
@@ -156,14 +156,7 @@ class ParseCsvTestCase(unittest.TestCase):
 
         csv_stream = _string_io(csv, "utf-8")
 
-        self.assertRaises(ParseError, parse_csv, csv_stream, [{"type": "int"}])
-
-    def test_expected_max_int_of_100_but_was_101_should_fail(self):
-        csv = u"count\n101"
-
-        csv_stream = _string_io(csv, "utf-8")
-
-        self.assertRaises(ParseError, parse_csv, csv_stream, [{"type": "int", "max": 100}])
+        self.assertRaises(ValidationError, parse_csv, csv_stream, [{"type": "int"}])
 
     def test_expected_max_int_of_100_and_was_100(self):
         csv = u"count\n100"
@@ -176,6 +169,13 @@ class ParseCsvTestCase(unittest.TestCase):
                 { u"count": 100 },
             ]
         ))
+
+    def test_expected_max_int_of_100_but_was_101_should_fail(self):
+        csv = u"count\n101"
+
+        csv_stream = _string_io(csv, "utf-8")
+
+        self.assertRaises(ValidationError, parse_csv, csv_stream, [{"type": "int", "max": 100}])
 
     def test_expected_min_int_of_100_and_was_100(self):
         csv = u"count\n100"
@@ -194,7 +194,7 @@ class ParseCsvTestCase(unittest.TestCase):
 
         csv_stream = _string_io(csv, "utf-8")
 
-        self.assertRaises(ParseError, parse_csv, csv_stream, [{"type": "int", "min": 100}])
+        self.assertRaises(ValidationError, parse_csv, csv_stream, [{"type": "int", "min": 100}])
 
     def test_date_schema_parsing(self):
         csv = u"date\n2013-05-16"
