@@ -34,12 +34,7 @@ def parse_rows(data, schema):
                 'Some rows in the CSV file contain fewer values than columns')
         if not is_empty_row(datum):
             if schema_validator:
-                if schema_validator.is_valid(datum):
-                    yield schema_validator.typed(datum)
-                else:
-                    raise ParseError(
-                        "Invalid data did not match the expected schema %s"
-                        % schema_validator.errors)
+                yield schema_validator.validate(datum)
             else:
                 yield datum
 
@@ -88,24 +83,72 @@ def unicode_csv_dict_reader(incoming_data, encoding):
     r.reader = UnicodeCsvReader(r.reader, encoding)
     return r
 
-
-import collections
 import re
 import datetime
 
-MAPPING_FUNCTIONS = collections.defaultdict(lambda: lambda x: x)
-MAPPING_FUNCTIONS["int"] = int
-MAPPING_FUNCTIONS["date"] = lambda val: \
-    datetime.datetime.strptime(val, "%Y-%m-%d")
-MAPPING_FUNCTIONS["datetime"] = lambda val: \
-    datetime.datetime.strptime(val, "%Y-%m-%dT%H:%M:%S")
 
-VALID_FORMATS = collections.defaultdict(lambda: lambda raw_val: True)
-VALID_FORMATS["int"] = lambda raw_val: re.match("^-?\d+$", raw_val)
-VALID_FORMATS["date"] = lambda raw_val: \
-    re.match("^\d{4}-\d{2}-\d{2}$", raw_val)
-VALID_FORMATS["datetime"] = lambda raw_val: \
-    re.match("^\d{4}-\d{2}-\d{2}T\d{2}\:\d{2}\:\d{2}$", raw_val)
+class BaseField:
+    def __init__(self, definition):
+        self.definition = definition
+        self.converted_value = None
+
+    def is_valid(self, raw_value):
+        pass
+
+    def convert(self, raw_value):
+        pass
+
+
+class StringField(BaseField):
+    def is_valid(self, raw_value):
+        return True
+
+    def convert(self, raw_value):
+        return raw_value
+
+
+class IntField(BaseField):
+    def is_valid(self, raw_value):
+        if not re.match("^-?\d+$", raw_value):
+            return False
+        self.converted_value = int(raw_value)
+
+        min_value = self.definition.get('min', None)
+        if min_value is not None and self.converted_value < min_value:
+            raise ParseError()
+
+        max_value = self.definition.get('max', None)
+        if max_value is not None and self.converted_value > max_value:
+            raise ParseError()
+
+        return True
+
+    def convert(self, raw_value):
+        return self.converted_value
+
+
+class DateField(BaseField):
+    def is_valid(self, raw_value):
+        return re.match("^\d{4}-\d{2}-\d{2}$", raw_value)
+
+    def convert(self, raw_value):
+        return datetime.datetime.strptime(raw_value, "%Y-%m-%d")
+
+
+class DatetimeField(BaseField):
+    def is_valid(self, raw_value):
+        return re.match("^\d{4}-\d{2}-\d{2}T\d{2}\:\d{2}\:\d{2}$", raw_value)
+
+    def convert(self, raw_value):
+        return datetime.datetime.strptime(raw_value, "%Y-%m-%dT%H:%M:%S")
+
+import collections
+
+FIELD_HANDLERS = collections.defaultdict(lambda:
+                                         lambda options: StringField(options))
+FIELD_HANDLERS["int"] = lambda options: IntField(options)
+FIELD_HANDLERS["date"] = lambda options: DateField(options)
+FIELD_HANDLERS["datetime"] = lambda options: DatetimeField(options)
 
 
 class CsvSchemaValidator(object):
@@ -114,28 +157,33 @@ class CsvSchemaValidator(object):
     content, keep our IL level suitably low, etc.
     """
     def __init__(self, schema):
-        self.mapping_functions = [MAPPING_FUNCTIONS[x.get("type", "string")]
-                                  for x in schema]
-        self.validation_functions = [VALID_FORMATS[x.get("type", "string")]
-                                     for x in schema]
+        self.field_handlers = [FIELD_HANDLERS[x.get("type", "string")](x)
+                               for x in schema]
         self.errors = []
 
-    def is_valid(self, datum):
+    def validate(self, datum):
+        if self._is_valid(datum):
+            return self._typed(datum)
+
+        raise ParseError(
+            "Invalid data did not match the expected schema %s"
+            % self.errors)
+
+    def _is_valid(self, datum):
         """
         Iterate each field in the datum, checking that it is valid according
         to the field definition
         """
-        self.errors = [value for validate, value in
-                       zip(self.validation_functions, datum.values())
-                       if not validate(value)]
+        self.errors = [value for handler, value in
+                       zip(self.field_handlers, datum.values())
+                       if not handler.is_valid(value)]
         return len(self.errors) == 0
 
-    def typed(self, datum):
+    def _typed(self, datum):
         """
         Iterate each field in the datum, converting to a concrete type where
         applicable
         """
-        # return datum
         return dict(zip(datum.keys(),
-                    [convert(value) for convert, value in
-                    zip(self.mapping_functions, datum.values())]))
+                    [handler.convert(value) for handler, value in
+                    zip(self.field_handlers, datum.values())]))
