@@ -38,7 +38,7 @@ Feature: csv upload validation
         then I should see the text "There was an error with your upload"
          and the platform should have "0" items stored in "foo"
 
-    Scenario: non UTF8 characters
+    Scenario: should reject non UTF8 characters
        Given a file named "data.csv" with fixture "bad-characters.csv"
          and I am logged in
         when I go to "/foo/upload"
@@ -46,6 +46,20 @@ Feature: csv upload validation
          and I click "Upload"
         then I should see the text "There was an error with your upload"
          and the platform should have "0" items stored in "foo"
+
+
+    Scenario: should accept UTF8 characters
+       Given a file named "data.csv" with fixture "currency-symbols.csv"
+         and I am logged in
+        when I go to "/foo/upload"
+         and I enter "data.csv" into the file upload field
+         and I click "Upload"
+        then the platform should have stored in "foo":
+             """
+             {"foo": "£"}
+             {"foo": "$"}
+             {"foo": "€"}
+             """
 
     Scenario: no file is provided
        Given I am logged in

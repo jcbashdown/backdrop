@@ -26,7 +26,7 @@ def parse_rows(data):
     for datum in data:
         if None in datum.keys():
             raise ParseError(
-                'Some rows ins the CSV file contain more values than columns')
+                'Some rows in the CSV file contain more values than columns')
         if None in datum.values():
             raise ParseError(
                 'Some rows in the CSV file contain fewer values than columns')
