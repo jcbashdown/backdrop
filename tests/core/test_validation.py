@@ -21,16 +21,17 @@ class ValidKeysTestCase(unittest.TestCase):
         assert_that(key_is_valid("name54"), is_(True))
         assert_that(key_is_valid("name_of_thing"), is_(True))
         assert_that(key_is_valid("son.of.thing"), is_(False))
-        assert_that(key_is_valid("name-of-thing"), is_(False))
+        assert_that(key_is_valid("name-of-thing"), is_(True))
         assert_that(key_is_valid("son;of;thing"), is_(False))
         assert_that(key_is_valid("son:of:thing"), is_(False))
+        assert_that(key_is_valid("son-of(thing)"), is_(True))
 
-    def test_keys_must_start_with_letter_or_underscore(self):
+    def test_keys_must_start_with_letter_number_or_underscore(self):
         assert_that(key_is_valid("field"), is_(True))
         assert_that(key_is_valid("_field"), is_(True))
         assert_that(key_is_valid("field1"), is_(True))
         assert_that(key_is_valid("Field1"), is_(True))
-        assert_that(key_is_valid("1field"), is_(False))
+        assert_that(key_is_valid("1field"), is_(True))
 
     def test_key_cannot_be_empty(self):
         assert_that(key_is_valid(""), is_(False))
@@ -126,7 +127,7 @@ class IdValueIsValidTestCase(unittest.TestCase):
 class TestValidateRecordData(unittest.TestCase):
     def test_objects_with_invalid_keys_are_disallowed(self):
         validation_result = validate_record_data({
-            'foo-bar': 'bar'
+            'foo:bar': 'bar'
         })
         assert_that(validation_result,
                     is_invalid_with_message("foo-bar is not a valid key"))

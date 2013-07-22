@@ -72,7 +72,7 @@ class TestRequestValidation(TestCase):
 
     def test_queries_filtering_by_invalid_field_names_are_disallowed(self):
         validation_result = validate_request_args({
-            'filter_by': 'with-hyphen:bar'
+            'filter_by': 'with:nohyphen:bar'
         })
         assert_that(validation_result, is_invalid_with_message(
             'Cannot filter by an invalid field name'
@@ -95,7 +95,7 @@ class TestRequestValidation(TestCase):
             "start with an underscore"))
 
     def test_queries_grouping_on_invalid_field_names_are_disallowed(self):
-        validation_result = validate_request_args({"group_by": "with-hyphen"})
+        validation_result = validate_request_args({"group_by": "with:nohyphen"})
         assert_that(validation_result, is_invalid_with_message(
             "Cannot group by an invalid field name"
         ))
@@ -122,7 +122,7 @@ class TestRequestValidation(TestCase):
 
     def test_queries_sorting_by_invalid_field_names_are_disallowed(self):
         validation_result = validate_request_args({
-            'sort_by': 'with-hyphen:ascending'
+            'sort_by': 'with:nohyphen:ascending'
         })
         assert_that(validation_result, is_invalid_with_message(
             'Cannot sort by an invalid field name'
@@ -206,7 +206,7 @@ class TestRequestValidation(TestCase):
     def test_queries_collecting_invalid_field_names_are_disallowed(self):
         validation_result = validate_request_args(MultiDict([
             ("group_by", "bar"),
-            ("collect", "with-hyphen")
+            ("collect", "with:column")
         ]))
         assert_that(validation_result, is_invalid_with_message(
             "Cannot collect an invalid field name"
