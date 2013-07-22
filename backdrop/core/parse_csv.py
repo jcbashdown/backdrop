@@ -85,6 +85,7 @@ def unicode_csv_dict_reader(incoming_data, encoding):
 
 import re
 import datetime
+from decimal import Decimal
 
 
 class BaseField:
@@ -131,6 +132,18 @@ class IntField(BaseField):
         return self.converted_value
 
 
+class DecimalField(BaseField):
+    def is_valid(self, raw_value):
+        if not re.match("^-?\d*.?\d*$", raw_value):
+            return False
+        self.converted_value = Decimal(raw_value)
+
+        return True
+
+    def convert(self, raw_value):
+        return self.converted_value
+
+
 class DateField(BaseField):
     def is_valid(self, raw_value):
         return re.match("^\d{4}-\d{2}-\d{2}$", raw_value)
@@ -151,6 +164,7 @@ import collections
 FIELD_HANDLERS = collections.defaultdict(lambda:
                                          lambda options: StringField(options))
 FIELD_HANDLERS["int"] = lambda options: IntField(options)
+FIELD_HANDLERS["decimal"] = lambda options: DecimalField(options)
 FIELD_HANDLERS["date"] = lambda options: DateField(options)
 FIELD_HANDLERS["datetime"] = lambda options: DatetimeField(options)
 

@@ -4,6 +4,7 @@ from cStringIO import StringIO
 import unittest
 import cStringIO
 import datetime
+from decimal import Decimal
 from hamcrest import assert_that, only_contains, is_
 
 from backdrop.core.parse_csv import parse_csv, lines
@@ -217,6 +218,18 @@ class ParseCsvTestCase(unittest.TestCase):
         assert_that(data, is_(
             [
                 {u"date": datetime.datetime(2013, 5, 16, 17, 33, 31)},
+            ]
+        ))
+
+    def test_decimal_schema_parsing(self):
+        csv = u"percent\n0.12"
+
+        csv_stream = _string_io(csv, "utf-8")
+
+        data = parse_csv(csv_stream, [{"type": "decimal"}])
+        assert_that(data, is_(
+            [
+                {u"percent": Decimal("0.12")},
             ]
         ))
 
