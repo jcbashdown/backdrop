@@ -32,6 +32,8 @@ class ValidKeysTestCase(unittest.TestCase):
         assert_that(key_is_valid("field1"), is_(True))
         assert_that(key_is_valid("Field1"), is_(True))
         assert_that(key_is_valid("1field"), is_(True))
+        assert_that(key_is_valid("(1field)"), is_(False))
+        assert_that(key_is_valid("-1field"), is_(False))
 
     def test_key_cannot_be_empty(self):
         assert_that(key_is_valid(""), is_(False))
@@ -130,7 +132,7 @@ class TestValidateRecordData(unittest.TestCase):
             'foo:bar': 'bar'
         })
         assert_that(validation_result,
-                    is_invalid_with_message("foo-bar is not a valid key"))
+                    is_invalid_with_message("foo:bar is not a valid key"))
 
     def test_objects_with_invalid_values_are_disallowed(self):
         validation_result = validate_record_data({
